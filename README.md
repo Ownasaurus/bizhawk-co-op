@@ -35,6 +35,10 @@ This works with the latest OoT Randomizer found on the website [https://www.ootr
 > - `OoT_R4AR3PKKPKF8UK7DSA_TestSeed_W2P1-comp.z64`
 > - `OoT_R4AR3PKKPKF8UK7DSA_TestSeed_W2P2-comp.z64` 
 
+## Castlevania: Symphony of the Night Co-op
+
+When one person acquires a relic, all players get that same relic. Confirmed to work with vanilla and randomizer from https://sotn.io/. Tested on US version of the game.
+
 ## Setup
 There are two different methods to install.
 * Run the PowerShell script, Download it here: [bizhawk-co-op.ps1](https://github.com/TestRunnerSRL/bizhawk-co-op/releases). I suggest placing it wherever you want to install Bizhawk. To install it, right-click it and select "Run with PowerShell". This will download & install a fresh copy of BizHawk with all the required files in their correct locations.  
