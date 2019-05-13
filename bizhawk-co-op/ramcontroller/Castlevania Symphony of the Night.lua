@@ -5,7 +5,13 @@ local sotn_ram = {}
 
 -- Writes value to RAM using little endian
 client.reboot_core()
+event.unregisterbyname("RelicText")
 local prevDomain = ""
+local messageLine1 = ""
+local messageLine2 = ""
+local messageLine3 = ""
+local messageTimer = 0
+
 function writeRAM(domain, address, size, value)
 	-- update domain
 	if (prevDomain ~= domain) then
@@ -139,7 +145,11 @@ function getGUImessage(address, prevVal, newVal, user)
 		-- If numeric, show the indexed name or name with value
 		elseif ramItems[address].type == "num" then
 			if (type(name) == 'string') then
-				gui.addmessage(user .. ": " .. name .. " = " .. newVal)
+                messageLine1 = user
+                messageLine2 = "found the"
+                messageLine3 = name .. "!"
+                -- capture the time of the acquisition
+                messageTimer = emu.framecount()
 			elseif (name[newVal]) then
 				gui.addmessage(user .. ": " .. name[newVal])
 			end
@@ -375,9 +385,7 @@ local splitItems = {}
 -- Process a message from another player and update RAM
 function sotn_ram.processMessage(their_user, message)
     
-    --printOutput("Message received: " .. dumpt(message))
-    
-    -- special item message
+    -- special initial item messages
     if message["i"] then
 		splitItems = message["i"]
 		message["i"] = nil
@@ -395,5 +403,17 @@ function sotn_ram.processMessage(their_user, message)
 end
 
 sotn_ram.itemcount = 30
+
+function RelicText()
+    local verticalOffset = 70
+    local lineOffset = 16
+    if (emu.framecount() - messageTimer < 180) then
+        gui.drawText(client.bufferwidth()/2, client.bufferheight()/2 + verticalOffset, messageLine1, 0x7FFFFFFF, 0x7F0000FF, 12, "Calibri", "bold", "center", "middle")
+        gui.drawText(client.bufferwidth()/2, client.bufferheight()/2 + verticalOffset + lineOffset, messageLine2, 0x7FFFFFFF, 0x7F0000FF, 12, "Calibri", "bold", "center", "middle")
+        gui.drawText(client.bufferwidth()/2, client.bufferheight()/2 + verticalOffset + lineOffset + lineOffset, messageLine3, 0x7FFFFFFF, 0x7F0000FF, 12, "Calibri", "bold", "center", "middle")
+    end
+end
+
+event.onframeend(RelicText, "RelicText")
 
 return sotn_ram
