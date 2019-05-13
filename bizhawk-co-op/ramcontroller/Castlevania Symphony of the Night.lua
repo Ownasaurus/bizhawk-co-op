@@ -49,9 +49,9 @@ function readRAM(domain, address, size)
 		end
 	end
 
-	-- default size short
+	-- default size is a byte
 	if (size == nil) then
-		size = 2
+		size = 1
 	end
 
 	if size == 1 then
@@ -72,8 +72,6 @@ local function recieveRelic(newValue, prevValue, address)
 	end
     
     return prevValue
-    
-    --return newValue
 end
 
 local function recieveSummon(newValue, prevValue, address)
@@ -84,24 +82,28 @@ local function recieveSummon(newValue, prevValue, address)
 	end
     
     return prevValue
-    
-    --return newValue
 end
 
-function dumpt(o)
-   if type(o) == 'table' then
-      local s = '{ '
-      for k,v in pairs(o) do
-         if type(k) ~= 'number' then k = '"'..k..'"' end
-         s = s .. '['..k..'] = ' .. dumpt(v) .. ','
-      end
-      return s .. '} '
-   else
-      return tostring(o)
-   end
+-- NOTE: UNFINISHED 
+--[[local function recieveXP(newValue, prevValue, address)
+    -- normal xp gain
+	if newValue > prevVaule then
+		
+    -- since you cannot lose xp, there must have been a carry
+    elseif newValue < prevValue
+    
+	end
+    
+    return prevValue
+end]]
+
+local function recieveTeleporter(newValue, prevValue, address)
+    -- i think we can simply go with the new value
+    return newValue
 end
 
 ramItems = {
+    -- relics
 	[0x097964] = {type="num", name="Soul of Bat", receiveFunc=recieveRelic},
     [0x097965] = {type="num", name="Fire of Bat", receiveFunc=recieveRelic},
     [0x097966] = {type="num", name="Echo of Bat", receiveFunc=recieveRelic},
@@ -132,11 +134,16 @@ ramItems = {
     [0x09797F] = {type="num", name="Rib of Vlad", receiveFunc=recieveRelic},
     [0x097980] = {type="num", name="Ring of Vlad", receiveFunc=recieveRelic},
     [0x097981] = {type="num", name="Eye of Vlad", receiveFunc=recieveRelic},
+    -- xp
+    --[0x097BEC] = {type="num", name="Experience", receiveFunc=recieveXP, size=2}, -- technically the size is slightly more than two bytes, but we only really need to read this part
+    -- teleporter unlocks
+    [0x03BEBC] = {type="bit", name="Teleporter", receiveFunc=recieveTeleporter},
 }
 
 -- Display a message of the ram event
 function getGUImessage(address, prevVal, newVal, user)
 	-- Only display the message if there is a name for the address
+    -- and if the name is not your name
 	local name = ramItems[address].name
 	if name and prevVal ~= newVal then
 		-- If boolean, show 'Removed' for false
@@ -161,7 +168,11 @@ function getGUImessage(address, prevVal, newVal, user)
 
 				if (newBit ~= prevBit) then
 					if (type(name) == 'string') then
-						gui.addmessage(user .. ": " .. name .. " flag " .. b .. (newBit and '' or ' Removed'))
+                        messageLine1 = user
+                        messageLine2 = "unlocked a new"
+                        messageLine3 = name .. "!"
+                        -- capture the time of the acquisition
+                        messageTimer = emu.framecount()
 					elseif (name[b]) then
 						gui.addmessage(user .. ": " .. name[b] .. (newBit and '' or ' Removed'))
 					end
@@ -404,13 +415,20 @@ end
 
 sotn_ram.itemcount = 30
 
+local verticalOffset = 70
+local lineOffset = 16
+local fontSize = 12
+local maxMessageTime = 180
+local textColor = 0x7FFFFFFF
+local bgColor = 0x7F0000FF
+
 function RelicText()
-    local verticalOffset = 70
-    local lineOffset = 16
-    if (emu.framecount() - messageTimer < 180) then
-        gui.drawText(client.bufferwidth()/2, client.bufferheight()/2 + verticalOffset, messageLine1, 0x7FFFFFFF, 0x7F0000FF, 12, "Calibri", "bold", "center", "middle")
-        gui.drawText(client.bufferwidth()/2, client.bufferheight()/2 + verticalOffset + lineOffset, messageLine2, 0x7FFFFFFF, 0x7F0000FF, 12, "Calibri", "bold", "center", "middle")
-        gui.drawText(client.bufferwidth()/2, client.bufferheight()/2 + verticalOffset + lineOffset + lineOffset, messageLine3, 0x7FFFFFFF, 0x7F0000FF, 12, "Calibri", "bold", "center", "middle")
+    local curFrameCount = emu.framecount()
+    
+    if (curFrameCount - messageTimer < maxMessageTime) then
+        gui.drawText(client.bufferwidth()/2, client.bufferheight()/2 + verticalOffset, messageLine1, textColor, bgColor, fontSize, "Calibri", "bold", "center", "middle")
+        gui.drawText(client.bufferwidth()/2, client.bufferheight()/2 + verticalOffset + lineOffset, messageLine2, textColor, bgColor, fontSize, "Calibri", "bold", "center", "middle")
+        gui.drawText(client.bufferwidth()/2, client.bufferheight()/2 + verticalOffset + lineOffset + lineOffset, messageLine3, textColor, bgColor, fontSize, "Calibri", "bold", "center", "middle")
     end
 end
 
