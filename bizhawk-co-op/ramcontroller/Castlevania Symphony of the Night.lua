@@ -1,5 +1,8 @@
 --author: Ownasaurus
 
+--TODO: resync shared memory on file load
+--      add sharing of other unlocks such as the wall and floor switches
+
 local prevRAM = nil
 local sotn_ram = {}
 
@@ -137,7 +140,8 @@ ramItems = {
     -- xp
     --[0x097BEC] = {type="num", name="Experience", receiveFunc=recieveXP, size=2}, -- technically the size is slightly more than two bytes, but we only really need to read this part
     -- teleporter unlocks
-    [0x03BEBC] = {type="bit", name="Teleporter", receiveFunc=recieveTeleporter},
+    [0x03BEBC] = {type="bit", name="Teleporter", receiveFunc=recieveTeleporter}, -- 1st castle
+    [0x03BEBD] = {type="bit", name="Teleporter", receiveFunc=recieveTeleporter}, -- 2nd castle
 }
 
 -- Display a message of the ram event
