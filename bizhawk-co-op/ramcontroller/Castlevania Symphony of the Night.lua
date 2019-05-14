@@ -142,6 +142,20 @@ ramItems = {
     -- teleporter unlocks
     [0x03BEBC] = {type="bit", name="Teleporter", receiveFunc=recieveTeleporter}, -- 1st castle
     [0x03BEBD] = {type="bit", name="Teleporter", receiveFunc=recieveTeleporter}, -- 2nd castle
+    -- caverns switch
+    [0x03BDED] = {type="num", name="Caverns Switch", receiveFunc=recieveSummon}, -- BUG: cannot be on same screen as pink areas
+    -- waterfall switch and wooden bridge
+    [0x03BEB3] = {type="bit", name="Waterfall Switch", receiveFunc=recieveTeleporter},
+    [0x03BE1C] = {type="num", name="Merman Switch", receiveFunc=recieveTeleporter},
+    [0x03BE1D] = {type="num", name="Marble Shortcut Switch", receiveFunc=recieveTeleporter},
+    [0x03BE1E] = {type="num", name="Warp Switch", receiveFunc=recieveTeleporter},
+    [0x03BE2E] = {type="num", name="Light Switch", receiveFunc=recieveTeleporter},
+    [0x03BDFC] = {type="num", name="Elevator Switch", receiveFunc=recieveTeleporter},
+    [0x03BE4C] = {type="num", name="Chapel Statue", receiveFunc=recieveTeleporter},
+    [0x03BE9D] = {type="num", name="Colosseum Switch", receiveFunc=recieveTeleporter},
+    --TODO: add colo elevator
+    --TODO: add 4 demon switches
+    --TODO: add 2 clocktower puzzles
 }
 
 -- Display a message of the ram event
@@ -166,22 +180,48 @@ function getGUImessage(address, prevVal, newVal, user)
 			end
 		-- If bitflag, show each bit: the indexed name or bit index as a boolean
 		elseif ramItems[address].type == "bit" then
-			for b=0,7 do
-				local newBit = bit.check(newVal, b)
-				local prevBit = bit.check(prevVal, b)
-
-				if (newBit ~= prevBit) then
-					if (type(name) == 'string') then
+            if address == 0x03BEB3 then -- special case for waterfall switch and wooden bridge
+                local newBit = bit.check(newVal, 0)
+				local prevBit = bit.check(prevVal, 0)
+                
+                if (newBit ~= prevBit) then
+                    if (type(name) == 'string') then
                         messageLine1 = user
-                        messageLine2 = "unlocked a new"
-                        messageLine3 = name .. "!"
-                        -- capture the time of the acquisition
+                        messageLine2 = "unlocked the"
+                        messageLine3 = "Waterfall Switch!"
                         messageTimer = emu.framecount()
-					elseif (name[b]) then
-						gui.addmessage(user .. ": " .. name[b] .. (newBit and '' or ' Removed'))
-					end
-				end
-			end
+                    end
+                end
+                
+                newBit = bit.check(newVal, 1)
+				prevBit = bit.check(prevVal, 1)
+                
+                if (newBit ~= prevBit) then
+                    if (type(name) == 'string') then
+                        messageLine1 = user
+                        messageLine2 = "unlocked the"
+                        messageLine3 = "Wooden Bridge!"
+                        messageTimer = emu.framecount()
+                    end
+                end
+            else
+                for b=0,7 do
+                    local newBit = bit.check(newVal, b)
+                    local prevBit = bit.check(prevVal, b)
+
+                    if (newBit ~= prevBit) then
+                        if (type(name) == 'string') then
+                            messageLine1 = user
+                            messageLine2 = "unlocked a new"
+                            messageLine3 = name .. "!"
+                            -- capture the time of the acquisition
+                            messageTimer = emu.framecount()
+                        elseif (name[b]) then
+                            gui.addmessage(user .. ": " .. name[b] .. (newBit and '' or ' Removed'))
+                        end
+                    end
+                end
+            end
 		-- if delta, show the indexed name, or the differential
 		elseif ramItems[address].type == "delta" then
 			local delta = newVal - prevVal
