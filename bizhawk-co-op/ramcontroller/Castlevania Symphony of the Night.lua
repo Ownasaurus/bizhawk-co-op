@@ -142,24 +142,38 @@ ramItems = {
     -- teleporter unlocks
     [0x03BEBC] = {type="bit", name="Teleporter", receiveFunc=recieveTeleporter}, -- 1st castle
     [0x03BEBD] = {type="bit", name="Teleporter", receiveFunc=recieveTeleporter}, -- 2nd castle
-    -- caverns switch
-    [0x03BDED] = {type="num", name="Caverns Switch", receiveFunc=recieveSummon}, -- BUG: cannot be on same screen as pink areas
-    -- waterfall switch and wooden bridge
-    [0x03BEB3] = {type="bit", name="Waterfall Switch", receiveFunc=recieveTeleporter},
+    -- switches and bridges
+    [0x03BDED] = {type="num", name="Caverns Switch", receiveFunc=recieveSummon}, -- BUG: cannot be on same screen as pink areas or other person can freeze
+    [0x03BEB3] = {type="bit", name="Waterfall Switch", receiveFunc=recieveTeleporter}, -- waterfall switch and wooden bridge at same memory address
     [0x03BE1C] = {type="num", name="Merman Switch", receiveFunc=recieveTeleporter},
     [0x03BE1D] = {type="num", name="Marble Shortcut Switch", receiveFunc=recieveTeleporter},
     [0x03BE1E] = {type="num", name="Warp Switch", receiveFunc=recieveTeleporter},
     [0x03BE2E] = {type="num", name="Light Switch", receiveFunc=recieveTeleporter},
     [0x03BDFC] = {type="num", name="Elevator Switch", receiveFunc=recieveTeleporter},
     [0x03BE4C] = {type="num", name="Chapel Statue", receiveFunc=recieveTeleporter},
-    [0x03BE9D] = {type="num", name="Colosseum Switch", receiveFunc=recieveTeleporter},
-    --TODO: add colo elevator
-    --TODO: add 4 demon switches
-    --TODO: add 2 clocktower puzzles
+    [0x03BE9D] = {type="num", name="Colosseum Gate", receiveFunc=recieveTeleporter},
+    [0x03BE3C] = {type="num", name="First Demon Button", receiveFunc=recieveTeleporter},
+    [0x03BE44] = {type="num", name="Second Demon Button", receiveFunc=recieveTeleporter},
+    [0x03BE80] = {type="num", name="Keep Stairs", receiveFunc=recieveTeleporter},
+    [0x03BE9E] = {type="num", name="Colosseum Elevator", receiveFunc=recieveTeleporter},
+    [0x03BE6F] = {type="num", name="Marble Elevator", receiveFunc=recieveTeleporter},
+    --TODO: add both clocktower puzzles
+    --[[ 1st castle:
+    1C1681 = 2
+    1C1683 = 8
+    1C1685 = 3
+    1C1685 = 0xE or 14
+    BUT does not update door state on the fly. can't quite get it to work!
+    maybe it will work if the clocktower area is reloaded?
+    --]]
 }
 
 -- Display a message of the ram event
 function getGUImessage(address, prevVal, newVal, user)
+    -- No need to display messages to ourselves
+    if user == config.user then
+        return
+    end
 	-- Only display the message if there is a name for the address
     -- and if the name is not your name
 	local name = ramItems[address].name
@@ -170,9 +184,36 @@ function getGUImessage(address, prevVal, newVal, user)
 		-- If numeric, show the indexed name or name with value
 		elseif ramItems[address].type == "num" then
 			if (type(name) == 'string') then
-                messageLine1 = user
-                messageLine2 = "found the"
-                messageLine3 = name .. "!"
+                if (0x09797D <= address and address <= 0x097981) then
+                    -- handle vlady daddys specially
+                    -- count how many we have
+                    local count = 0
+                    local memval = 0
+                    for addy=0x09797D,0x097981 do
+                        memval = readRAM("MainRAM", addy, 1)
+                        if memval > 0 then 
+                            count = count + 1
+                        end
+                    end
+                    
+                    -- account for the fact that the clients will be off by one
+                    if user ~= config.user then
+                        count = count + 1
+                    end
+                    
+                    messageLine1 = user
+                    if count == 5 then
+                        messageLine2 = "found the FINAL VladyDaddy"
+                        messageLine3 = "Go mode engaged!"
+                    else
+                        messageLine2 = "found a VladyDaddy"
+                        messageLine3 = "Current count = " .. count .. "/5"
+                    end
+                else
+                    messageLine1 = user
+                    messageLine2 = "unlocked the"
+                    messageLine3 = name .. "!"
+                end
                 -- capture the time of the acquisition
                 messageTimer = emu.framecount()
 			elseif (name[newVal]) then
