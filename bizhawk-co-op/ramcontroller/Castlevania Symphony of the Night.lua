@@ -139,7 +139,6 @@ ramItems = {
     [0x097981] = {type="num", name="Eye of Vlad", receiveFunc=recieveRelic},
     -- xp
     --[0x097BEC] = {type="num", name="Experience", receiveFunc=recieveXP, size=2}, -- technically the size is slightly more than two bytes, but we only really need to read this part
-    -- teleporter unlocks
     [0x03BEBC] = {type="bit", name="Teleporter", receiveFunc=recieveTeleporter}, -- 1st castle
     [0x03BEBD] = {type="bit", name="Teleporter", receiveFunc=recieveTeleporter}, -- 2nd castle
     -- switches and bridges
@@ -154,7 +153,7 @@ ramItems = {
     [0x03BE9D] = {type="num", name="Colosseum Gate", receiveFunc=recieveTeleporter},
     [0x03BE3C] = {type="num", name="First Demon Button", receiveFunc=recieveTeleporter},
     [0x03BE44] = {type="num", name="Second Demon Button", receiveFunc=recieveTeleporter},
-    [0x03BE80] = {type="num", name="Keep Stairs", receiveFunc=recieveTeleporter},
+    [0x03BE80] = {type="num", name="Castle Keep Secret", receiveFunc=recieveTeleporter},
     [0x03BE9E] = {type="num", name="Colosseum Elevator", receiveFunc=recieveTeleporter},
     [0x03BE6F] = {type="num", name="Marble Elevator", receiveFunc=recieveTeleporter},
     --TODO: add both clocktower puzzles
@@ -186,7 +185,7 @@ function getGUImessage(address, prevVal, newVal, user)
 			if (type(name) == 'string') then
                 if (0x09797D <= address and address <= 0x097981) then
                     -- handle vlady daddys specially
-                    -- count how many we have
+                    -- count how many we have by going through the vlady daddy addys
                     local count = 0
                     local memval = 0
                     for addy=0x09797D,0x097981 do
@@ -246,6 +245,12 @@ function getGUImessage(address, prevVal, newVal, user)
                     end
                 end
             else
+                -- teleporter unlocks
+                -- lowest bit is Entrance
+                -- next lowest bit is Catacombs
+                -- next lowest bit is Outer Wall
+                -- next lowest bit is Keep
+                -- next lowest bit is Olrox
                 for b=0,7 do
                     local newBit = bit.check(newVal, b)
                     local prevBit = bit.check(prevVal, b)
@@ -253,8 +258,24 @@ function getGUImessage(address, prevVal, newVal, user)
                     if (newBit ~= prevBit) then
                         if (type(name) == 'string') then
                             messageLine1 = user
-                            messageLine2 = "unlocked a new"
-                            messageLine3 = name .. "!"
+                            messageLine2 = "unlocked the"
+                            if (b == 0) then
+                                messageLine3 = "Entrance Teleporter!"
+                            elseif (b == 1) then
+                                messageLine3 = "Abandoned Mine Teleporter!"
+                            elseif (b == 2) then
+                                messageLine3 = "Outer Wall Teleporter!"
+                            elseif (b == 3) then
+                                messageLine3 = "Castle Keep Teleporter!"
+                            elseif (b == 4) then
+                                messageLine3 = "Olrox Quarters Teleporter!"
+                            else
+                                messageLine3 = "?!?!?!"
+                            end
+                            
+                            if (address == 0x03BEBD) then -- special case for inverted teleporters
+                                messageLine3 = "Inverted " .. messageLine3
+                            end
                             -- capture the time of the acquisition
                             messageTimer = emu.framecount()
                         elseif (name[b]) then
